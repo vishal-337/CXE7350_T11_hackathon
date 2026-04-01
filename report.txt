@@ -1,0 +1,15 @@
+# add info wherever work was done
+# keep the chronology of the work and the flow of information intact
+## methodology
+### querying strategy
+
+## model development 
+### model architecture
+### training details
+
+## evaluation process
+### model perfomance analysis
+
+## reflections and analysis 
+
+## contibutions
