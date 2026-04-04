@@ -9,4 +9,5 @@
 | `The_Hackathon_predictions (3).ipynb` | Gradient boosting, ridge, XGBoost, extra trees, hist gradient boosting, PyTorch MLP |
 | `MLB26_Hack.ipynb` | XGBoost with `objective='rank:pairwise'` (pairwise ranking on labels) instead of `reg:squarederror` like in `The_Hackathon_predictions (3).ipynb` |
 
-Most recent version: `MLB26_Hack.ipynb`., prediction_file:predictions/XGBoost_rank:pairwise/predictions.csv
+Most recent version: `MLB26_Hack.ipynb`.
+Most recent prediction file:`predictions/XGBoost_rank:pairwise/predictions.csv`.
