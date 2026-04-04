@@ -5,7 +5,10 @@
 
 ## model development 
 ### model architecture
+`MLB26_Hack.ipynb` encodes each mutant as scaled site index, 20-D mutant one-hot, BLOSUM62 score, and hydrophobicity, volume, and charge deltas (wild-type to mutant). XGBoost `XGBRegressor` fits boosted trees on this tabular input.
+
 ### training details
+Random 80/20 train/validation split (seed 0); training uses the train portion only. XGBoost uses `rank:pairwise`, 300 estimators, depth 3, learning rate 0.03, row and column subsample 0.8, `random_state=42`, then predicts on the test feature matrix.
 
 ## evaluation process
 ### model perfomance analysis
@@ -18,3 +21,6 @@
 Active Learning Methods for Efficient Data Utilization and Model Performance Enhancement : https://arxiv.org/html/2504.16136v1
 Active Learning 101: A Complete Guide to Higher Quality Data : https://superb-ai.com/en/resources/blog/active-learning-101-part-1
 The sequence could be NADPH from Rhesus Monkey probably ==> sequence aligns well ==> this gives an idea of the basic function of the protein so what amino acids would be important based on chemical properties
+
+
+
