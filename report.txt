@@ -2,6 +2,11 @@
 # keep the chronology of the work and the flow of information intact
 ## methodology
 ### querying strategy
+#### Query 1 (Amey)
+Used 2 models (GradientBoosting + Ridge) to compute disagreement and failure similarity scores. Hand-picked biologically important positions (charged residues R, K, D, Y) in the catalytic region. Selected 100 mutations across 27 unique positions (range 40-509), with multiple mutations per position (e.g. 5 at R156, 5 at Y118, 5 at D99).
+
+#### Query 2 (Rishi)
+Built a disagreement-based active learning pipeline (`Model Attemps/disagreement_query.py`). Trained 5 models (GradientBoosting, HistGradientBoosting, Ridge, ExtraTrees, RandomForest) on combined training data (train.csv + queryGroundTruth1.csv = 1240 examples). For each test mutation, computed variance across all 5 model predictions. Added a diversity constraint: divided the 656-length protein into 20 bins (~33 positions each) and selected the top 5 highest-disagreement mutations from each bin. This ensures coverage across the full protein rather than clustering in one region. Result: 100 mutations across 74 unique positions (range 1-637), with 98/100 from positions not in training data.
 
 ## model development 
 ### model architecture
@@ -12,10 +17,21 @@ Random 80/20 train/validation split (seed 0); training uses the train portion on
 
 ## evaluation process
 ### model perfomance analysis
+Validation Spearman scores (80/20 split, trained on train.csv + query1 = 1240 examples):
+- GradientBoosting: 0.4912
+- HistGradientBoosting: 0.4848
+- RandomForest: 0.4501
+- ExtraTrees: 0.4113
+- Ridge: 0.2727
+
+Kaggle scores (30% hidden test set):
+- XGBoost rank:pairwise (train.csv only, 1140 examples): 0.34263
+- 4-model ensemble without Ridge (train.csv + query1, 1240 examples): 0.34641
 
 ## reflections and analysis 
 
 ## contibutions
+- Rishi: Disagreement-based active learning pipeline for query selection, ensemble model experiments, diversity-constrained query2 generation, model performance documentation
 
 ## references
 Active Learning Methods for Efficient Data Utilization and Model Performance Enhancement : https://arxiv.org/html/2504.16136v1

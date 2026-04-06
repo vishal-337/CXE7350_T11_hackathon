@@ -27,11 +27,12 @@ with open("../Hackathon_data/sequence.fasta", "r") as f:
 
 df_train = pd.read_csv("../Hackathon_data/train.csv")
 df_query1 = pd.read_csv("../Hackathon_data/queryGroundTruth1.csv")[["mutant", "DMS_score"]]
+df_query2 = pd.read_csv("../queries/query2/q2_results.csv")[["mutant", "DMS_score"]]
 df_test = pd.read_csv("../Hackathon_data/test.csv")
 
-# Combine train + query1 ground truth
-df_train_full = pd.concat([df_train, df_query1], ignore_index=True)
-print(f"Training size: {len(df_train)} + {len(df_query1)} query1 = {len(df_train_full)} total")
+# Combine train + query1 + query2 ground truth
+df_train_full = pd.concat([df_train, df_query1, df_query2], ignore_index=True)
+print(f"Training size: {len(df_train)} + {len(df_query1)} query1 + {len(df_query2)} query2 = {len(df_train_full)} total")
 
 # ─── 2. Feature encoding (same as MLB26_Hack.ipynb) ─────────────────────────
 
@@ -140,8 +141,10 @@ print(f"  Min:  {variance.min():.6f}")
 
 # ─── 8. Pick 100 with diversity + disagreement → query2.txt ──────────────────
 
-# Exclude mutations already queried in query1
+# Exclude mutations already queried in query1 and query2
 query1_mutants = set(df_query1["mutant"].values)
+query2_mutants_prev = set(df_query2["mutant"].values)
+queried_mutants = query1_mutants | query2_mutants_prev
 # Also exclude mutations at positions already in training data
 train_positions = set(int(m[1:-1]) for m in df_train_full["mutant"].values)
 
@@ -149,7 +152,7 @@ test_mutants = df_test["mutant"].values
 test_positions = np.array([int(m[1:-1]) for m in test_mutants])
 
 # Mask out already-queried mutations
-mask = np.array([m not in query1_mutants for m in test_mutants])
+mask = np.array([m not in queried_mutants for m in test_mutants])
 variance_masked = variance.copy()
 variance_masked[~mask] = -1
 
@@ -215,10 +218,10 @@ print(f"  Variance range: {variance[query2_indices].min():.6f} to {variance[quer
 new_positions = [p for p in q2_positions if p not in train_positions]
 print(f"  From unseen positions: {len(new_positions)}/100")
 
-with open("../queries/query2/query2.txt", "w") as f:
+with open("../queries/query3/query3.txt", "w") as f:
     for m in query2_mutants:
         f.write(m + "\n")
-print("  Saved to queries/query2/query2.txt")
+print("  Saved to queries/query3/query3.txt")
 
 # ─── 9. Ensemble prediction (average of top models, exclude Ridge) ───────────
 
