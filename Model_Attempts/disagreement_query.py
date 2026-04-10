@@ -1,7 +1,7 @@
 """
 Disagreement-Based Active Learning Query Selection + Improved Predictions
 
-1. Combines train.csv + queryGroundTruth1.csv
+1. Combines train.csv + queryGroundTruth1.csv + query2/q3 results CSVs
 2. Trains 5 different models
 3. Predicts test set with each
 4. Picks 100 mutations where models disagree most → query2.txt
@@ -28,11 +28,16 @@ with open("../Hackathon_data/sequence.fasta", "r") as f:
 df_train = pd.read_csv("../Hackathon_data/train.csv")
 df_query1 = pd.read_csv("../Hackathon_data/queryGroundTruth1.csv")[["mutant", "DMS_score"]]
 df_query2 = pd.read_csv("../queries/query2/q2_results.csv")[["mutant", "DMS_score"]]
+df_query3 = pd.read_csv("../queries/query3/q3_results.csv")[["mutant", "DMS_score"]]
 df_test = pd.read_csv("../Hackathon_data/test.csv")
 
-# Combine train + query1 + query2 ground truth
-df_train_full = pd.concat([df_train, df_query1, df_query2], ignore_index=True)
-print(f"Training size: {len(df_train)} + {len(df_query1)} query1 + {len(df_query2)} query2 = {len(df_train_full)} total")
+df_train_full = pd.concat(
+    [df_train, df_query1, df_query2, df_query3], ignore_index=True
+).drop_duplicates(subset=["mutant"], keep="last")
+print(
+    f"Training size: {len(df_train)} + {len(df_query1)} query1 + {len(df_query2)} query2 "
+    f"+ {len(df_query3)} query3 → {len(df_train_full)} after dedup"
+)
 
 # ─── 2. Feature encoding (same as MLB26_Hack.ipynb) ─────────────────────────
 
@@ -114,7 +119,7 @@ for name, model in models.items():
 
 # ─── 6. Retrain all models on FULL training data ────────────────────────────
 
-print("\n── Retraining on full data (train + query1) ──")
+print("\n── Retraining on full data (train + query1 + query2 + query3) ──")
 test_predictions = {}
 for name, model in models.items():
     model.fit(X_train, y_train)
@@ -144,7 +149,8 @@ print(f"  Min:  {variance.min():.6f}")
 # Exclude mutations already queried in query1 and query2
 query1_mutants = set(df_query1["mutant"].values)
 query2_mutants_prev = set(df_query2["mutant"].values)
-queried_mutants = query1_mutants | query2_mutants_prev
+query3_mutants_prev = set(df_query3["mutant"].values)
+queried_mutants = query1_mutants | query2_mutants_prev | query3_mutants_prev
 # Also exclude mutations at positions already in training data
 train_positions = set(int(m[1:-1]) for m in df_train_full["mutant"].values)
 
@@ -233,18 +239,17 @@ print(f"Excluded from ensemble (still used for disagreement): Ridge")
 
 ensemble_preds = all_preds_norm[top_model_idx].mean(axis=0)
 
-df_test["DMS_score"] = ensemble_preds
-df_test["id"] = df_test.index
+df_test["DMS_score_predicted"] = ensemble_preds
 
-# Save predictions
-df_test[["id", "DMS_score"]].to_csv("../predictions/ensemble/predictions.csv", index=False)
+df_test[["mutant", "DMS_score_predicted"]].to_csv(
+    "../predictions/ensemble/predictions.csv", index=False
+)
 print(f"\n── Ensemble predictions saved ──")
 
-# Top 10 mutations
-top10 = df_test.sort_values("DMS_score", ascending=False).head(10)
+top10 = df_test.sort_values("DMS_score_predicted", ascending=False).head(10)
 print(f"\n── Top 10 predicted mutations ──")
 for _, row in top10.iterrows():
-    print(f"  {row['mutant']:10s} score: {row['DMS_score']:.4f}")
+    print(f"  {row['mutant']:10s} score: {row['DMS_score_predicted']:.4f}")
 
 with open("../predictions/ensemble/top10.txt", "w") as f:
     for m in top10["mutant"].values:
